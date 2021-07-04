@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>D3 Tutorial</title>
+  </head>
+  <body>
+    <div id="container">
+      <svg></svg>
+    </div>
+    <script>
+      /*  tweets.json 산포도
+
+      favorite한 트윗이나 retweet한 트윗은 중요한 트윗이라고 생각하고
+      이 지표로 트윗의 영향력을 측정한다고 가정
+      막대 그래프 대신 산포도를 이용하고, X축에는 배열 인덱스 대신 트윗 시각을 이용
+      Y축은 트윗의 영향력
+
+      브라우저에서 file 접근하는게 잘 안되는거같아서 데이터 선언부터 시작
+      */
+      const data = {
+        tweets: [
+          {
+            user: "Al",
+            content: "I really love seafood.",
+            timestamp: " Mon Dec 23 2013 21:30 GMT-0800 (PST)",
+            retweets: ["Raj", "Pris", "Roy"],
+            favorites: ["Sam"],
+          },
+          {
+            user: "Al",
+            content: "I take that back, this doesn't taste so good.",
+            timestamp: "Mon Dec 23 2013 21:55 GMT-0800 (PST)",
+            retweets: ["Roy"],
+            favorites: [],
+          },
+          {
+            user: "Al",
+            content: "From now on, I'm only eating cheese sandwiches.",
+            timestamp: "Mon Dec 23 2013 22:22 GMT-0800 (PST)",
+            retweets: [],
+            favorites: ["Roy", "Sam"],
+          },
+          {
+            user: "Roy",
+            content: "Great workout!",
+            timestamp: " Mon Dec 23 2013 7:20 GMT-0800 (PST)",
+            retweets: [],
+            favorites: [],
+          },
+          {
+            user: "Roy",
+            content: "Spectacular oatmeal!",
+            timestamp: " Mon Dec 23 2013 7:23 GMT-0800 (PST)",
+            retweets: [],
+            favorites: [],
+          },
+          {
+            user: "Roy",
+            content: "Amazing traffic!",
+            timestamp: " Mon Dec 23 2013 7:47  GMT-0800 (PST)",
+            retweets: [],
+            favorites: [],
+          },
+          {
+            user: "Roy",
+            content: "Just got a ticket for texting and driving!",
+            timestamp: " Mon Dec 23 2013 8:05 GMT-0800 (PST)",
+            retweets: [],
+            favorites: ["Sam", "Sally", "Pris"],
+          },
+          {
+            user: "Pris",
+            content: "Going to have some boiled eggs.",
+            timestamp: " Mon Dec 23 2013 18:23 GMT-0800 (PST)",
+            retweets: [],
+            favorites: ["Sally"],
+          },
+          {
+            user: "Pris",
+            content: "Maybe practice some gymnastics.",
+            timestamp: " Mon Dec 23 2013 19:47  GMT-0800 (PST)",
+            retweets: [],
+            favorites: ["Sally"],
+          },
+          {
+            user: "Sam",
+            content: "@Roy Let's get lunch",
+            timestamp: " Mon Dec 23 2013 11:05 GMT-0800 (PST)",
+            retweets: ["Pris"],
+            favorites: ["Sally", "Pris"],
+          },
+        ],
+      };
+
+      const visualize = (incomingData) => {
+        incomingData.forEach((el) => {
+          el.impact = el.favorites.length + el.retweets.length;
+          el.tweetTime = new Date(el.timestamp);
+        });
+
+        const maxImpact = d3.max(incomingData, (el) => el.impact);
+        const startEnd = d3.extent(incomingData, (el) => el.tweetTime);
+
+        const timeRamp = d3.scaleTime().domain(startEnd).range([20, 480]);
+        const yScale = d3.scaleLinear().domain([0, maxImpact]).range([0, 460]);
+        const radiusScale = d3
+          .scaleLinear()
+          .domain([0, maxImpact])
+          .range([1, 20]);
+        const colorScale = d3
+          .scaleLinear()
+          .domain([0, maxImpact])
+          .range(["#ffffff", "#990000"]);
+
+        d3.select("svg").attr(
+          "style",
+          "height:500px;width:500px;border:1px solid gray;"
+        );
+
+        d3.select("svg")
+          .selectAll("circle")
+          .data(incomingData)
+          .enter()
+          .append("circle")
+          .attr("r", (d) => radiusScale(d.impact))
+          .attr("cx", (d, i) => timeRamp(d.tweetTime))
+          .attr("cy", (d) => 480 - yScale(d.impact))
+          .style("fill", (d) => colorScale(d.impact))
+          .style("stroke-width", "1px")
+          .style("stroke", "black");
+
+        // 모든 데이터에 대해 g 태그 생성(circle과는 별개로 존재)
+        const tweetG = d3
+          .select("svg")
+          .selectAll("g")
+          .data(incomingData, (d) => JSON.stringify(d)) // 바인딩 키 설정, 인덱스에 의존하지 않게 한다
+          .enter()
+          .append("g")
+          .attr(
+            "transform",
+            (d) =>
+              `translate(${timeRamp(d.tweetTime)}, ${480 - yScale(d.impact)})` // 점이 있는 곳으로 이동시키기
+          );
+
+        // 똑같이 모든 셀렉션에 만들어진 g태그에 대해 text를 만들어준다
+        // g로 위치를 표시하고 그 다음에 text를 넣어준 것
+        // tweetG
+        //   .append("text")
+        //   .text((d) => `${d.user} - ${d.tweetTime.getHours()}`);
+
+        // 위에서부터 4개 제외하고 g태그 모두 제거 + 1,2,3,4 바인딩 덮어쓰기
+        // d3.selectAll("g").data([1, 2, 3, 4]).exit().remove();
+
+        // 1,2,3,4로 표시 대체하기
+        // d3.selectAll("g")
+        //   .select("text")
+        //   .text((d) => d);
+
+        // 영향력이 없는 트윗은 제거한다
+        const filteredData = incomingData.filter((el) => el.impact > 0); // 7개가 된다
+        d3.selectAll("circle")
+          .data(filteredData, (d) => JSON.stringify(d))
+          .exit()
+          .remove();
+      };
+
+      visualize(data.tweets);
+    </script>
+  </body>
+</html>
