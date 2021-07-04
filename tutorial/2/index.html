@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>D3 Tutorial</title>
+  </head>
+  <body>
+    <div id="container">
+      <svg style="height: 500px; width: 500px"></svg>
+    </div>
+    <script>
+      // const data = [15, 50, 22, 8, 100, 10];
+      const data = [14, 68, 24500, 43, 19, 1000, 5555];
+
+      // 다중 선형 스케일 : 도메인과 레인지에 여러 지점을 설정하는 선형 스케일
+      // 의도에 따라 다르게 표현 가능 - 특정 값 이상인 경우를 강조하고 싶거나
+      const yScale = d3
+        .scaleLinear()
+        .domain([0, 100, 1000, d3.max(data, (max) => max)])
+        .range([0, 50, 75, 100])
+        .clamp(true); // 도메인의 최댓값보다 크거나 작은 값을 추정하지 않으려면 사용
+
+      d3.select("svg")
+        .selectAll("rect") // 아직 rect 요소가 없다(들어가야 함)
+        .data(data)
+        .enter()
+        .append("rect") // 요소 추가
+        .attr("width", 30)
+        .attr("height", (d) => yScale(d)) // 높이를 데이터값과 똑같이 설정
+        .attr("x", (d, i) => i * 40) // width보다 넓게
+        .attr("y", (d) => 100 - yScale(d)) // 사각형의 최대 높이가 100이므로 100-높이
+        .style("fill", "blue")
+        .style("stroke", "red")
+        .style("stroke-width", "1px");
+    </script>
+  </body>
+</html>
