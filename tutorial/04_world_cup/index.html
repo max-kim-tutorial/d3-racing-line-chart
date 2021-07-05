@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="./style.css" rel="stylesheet" type="text/css" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="viz">
+      <svg
+        style="width: 500px; height: 500px; border: 1px lightgray solid"
+      ></svg>
+    </div>
+    <div id="controls"></div>
+    <script>
+      const soccer = [
+        {
+          team: "Netherlands",
+          region: "UEFA",
+          win: 6,
+          loss: 0,
+          draw: 1,
+          points: 18,
+          gf: 12,
+          ga: 6,
+          cs: 2,
+          yc: 23,
+          rc: 1,
+        },
+        {
+          team: "Spain",
+          region: "UEFA",
+          win: 6,
+          loss: 0,
+          draw: 1,
+          points: 18,
+          gf: 8,
+          ga: 2,
+          cs: 5,
+          yc: 8,
+          rc: 0,
+        },
+        {
+          team: "Germany",
+          region: "UEFA",
+          win: 5,
+          loss: 0,
+          draw: 2,
+          points: 15,
+          gf: 16,
+          ga: 5,
+          cs: 3,
+          yc: 10,
+          rc: 1,
+        },
+        {
+          team: "Argentina",
+          region: "CONMEBOL",
+          win: 4,
+          loss: 0,
+          draw: 1,
+          points: 12,
+          gf: 10,
+          ga: 6,
+          cs: 2,
+          yc: 8,
+          rc: 0,
+        },
+        {
+          team: "Uruguay",
+          region: "CONMEBOL",
+          win: 3,
+          loss: 2,
+          draw: 2,
+          points: 11,
+          gf: 11,
+          ga: 8,
+          cs: 3,
+          yc: 13,
+          rc: 2,
+        },
+        {
+          team: "Brazil",
+          region: "CONMEBOL",
+          win: 3,
+          loss: 1,
+          draw: 1,
+          points: 10,
+          gf: 9,
+          ga: 4,
+          cs: 2,
+          yc: 9,
+          rc: 2,
+        },
+        {
+          team: "Ghana",
+          region: "CAF",
+          win: 2,
+          loss: 2,
+          draw: 1,
+          points: 8,
+          gf: 5,
+          ga: 4,
+          cs: 1,
+          yc: 12,
+          rc: 0,
+        },
+        {
+          team: "Japan",
+          region: "AFC",
+          win: 2,
+          loss: 1,
+          draw: 1,
+          points: 7,
+          gf: 4,
+          ga: 2,
+          cs: 2,
+          yc: 4,
+          rc: 0,
+        },
+      ];
+
+      const createSoccerVis = (incomingData) => {
+        d3.select("svg")
+          .append("g") // g를 일단 하나만 더하나보네
+          .attr("id", "teamsG")
+          .attr("transform", "translate(50,300)") // 가운데로 옮기기
+          .selectAll("g") // 없는 요소인 모든 g를 선택하여
+          .data(incomingData) // 데이터 바인딩 후
+          .enter()
+          .append("g") // g요소를 더하고 클래스도 만들어주고 옮긴다
+          .attr("class", "overallG")
+          .attr("transform", (d, i) => `translate(${i * 50}, 0)`);
+
+        const teamG = d3.selectAll("g.overallG"); // 원을 그릴 모든 g요소를 픽한다
+
+        // 모든 g요소에
+        teamG
+          .append("circle") // 원추가하고
+          .attr("r", 0)
+          .transition() // 원이 크게 늘어났다가 다시 돌아오는 효과 추가
+          .delay((d, i) => i * 100) // 오... 동시가 아니라 delay를 인덱스에 따라 차등적으로(주르륵)
+          .duration(500)
+          .attr("r", 40) // 크게 만들기
+          .transition()
+          .duration(500)
+          .attr("r", 20) // transition => delay => duration => 뭔가 변화 이렇게 3단계인듯
+          .style("fill", "pink")
+          .style("stroke", "black")
+          .style("stroke-width", "1px");
+
+        // label 추가
+        teamG
+          .append("text")
+          .style("text-anchor", "middle")
+          .attr("y", 30)
+          .style("font-size", "10px")
+          .text((d) => d.team);
+
+        // 상호작용성 - 그래프의 모습을 변경하는 버튼을 추가한다
+        // 전통적인 방식대로 html에 직접 버튼을 넣고 함수를 연결할 수도 있지만
+        // d3로 데이터의 속성을 찾아내고 조사해 버튼을 동적으로 생성할 수도 있음
+        // 이렇게 구현하면 데이터가 커질때도 코드를 변경하지 않고 사용할 수 있고
+        // 데이터셋에 속성을 추가하면 필요한 버튼이 자동으로 생성됨
+
+        const buttonClick = (e, name) => {
+          const maxValue = d3.max(incomingData, (d) => parseFloat(d[name]));
+
+          const radiusScale = d3
+            .scaleLinear()
+            .domain([0, maxValue])
+            .range([2, 20]);
+
+          d3.selectAll("g.overallG") // 이미 존재하는 원의 반지름을 선택한 프로퍼티의 값만큼 줄이기
+            .select("circle")
+            .transition()
+            .duration(1000) // 트랜지션 추가
+            .attr("r", (d) => radiusScale(d[name]));
+        };
+
+        // 비수치형 데이터 제외, 수치상으로 나타낼 수 있는 키만 가져온다
+        const dataKeys = Object.keys(incomingData[0]).filter(
+          (el) => el !== "team" && el !== "region"
+        );
+
+        console.log(dataKeys);
+
+        d3.select("#controls")
+          .selectAll("button.teams") // 일단 없음
+          .data(dataKeys)
+          .enter()
+          .append("button") // key프로퍼티 만큼 버튼을 만든다
+          .on("click", buttonClick) // 이렇게 이벤트 핸들러를 연동시킬 수 있다 바인딩된 데이터 전달
+          .html((d) => d);
+
+        const highlightRegion = (e, data) => {
+          d3.selectAll("g.overallG")
+            .select("circle")
+            .style("fill", (p) => (p.region == data.region ? "red" : "gray"));
+        };
+
+        // 화살표 함수로 하면 lexical this 때문에 this가 전역 객체를 가르켜버린다
+        // 이벤트 핸들러의 this
+        function highlightRegion2(d, i) {
+          d3.select(this).select("text").classed("active", true).attr("y", 10);
+          d3.selectAll("g.overallG")
+            .select("circle")
+            .each((p, i) => {
+              p.region == d.region
+                ? d3.select(this).classed("active", true)
+                : d3.select(this).classed("inactive", true);
+            });
+          this.parentElement.appendChild(this);
+        }
+
+        const unhighlight = () => {
+          d3.selectAll("g.overallG").select("circle").attr("class", "");
+          d3.selectAll("g.overallG")
+            .select("text")
+            .classed("active", false)
+            .attr("y", 30);
+        };
+
+        // 원에 상호작용 추가 - 어떤 팀끼리 같은 지역에 있는지 마우스 오버하면 색깔로 표시
+        teamG.on("mouseover", highlightRegion2); // delegation
+        teamG.on("mouseout", unhighlight);
+      };
+
+      createSoccerVis(soccer);
+    </script>
+  </body>
+</html>
