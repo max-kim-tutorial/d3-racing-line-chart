@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <title>박스 플롯 차트</title>
+</head>
+<body>
+  <div>요일별 방문자 나이의 여러가지 지표</div>
+  <div>어떤 날의 방문자 나이 중앙값이 다른 날의 주요 방문자 층에 속하나?</div>
+  <svg style="width:520px;height:520px"></svg>
+  <script>
+    const boxPlotData = [
+    {
+      "day": 1,
+      "min": 14,
+      "max": 65,
+      "median": 33,
+      "q1": 20,
+      "q3": 35,
+      "number": 22
+    },
+    {
+      "day": 2,
+      "min": 25,
+      "max": 73,
+      "median": 25,
+      "q1": 25,
+      "q3": 30,
+      "number": 170
+    },
+    {
+      "day": 3,
+      "min": 15,
+      "max": 40,
+      "median": 25,
+      "q1": 17,
+      "q3": 28,
+      "number": 185
+    },
+    {
+      "day": 4,
+      "min": 18,
+      "max": 55,
+      "median": 33,
+      "q1": 28,
+      "q3": 42,
+      "number": 135
+    },
+    {
+      "day": 5,
+      "min": 14,
+      "max": 66,
+      "median": 35,
+      "q1": 22,
+      "q3": 45,
+      "number": 150
+    },
+    {
+      "day": 6,
+      "min": 22,
+      "max": 70,
+      "median": 34,
+      "q1": 28,
+      "q3": 42,
+      "number": 170
+    },
+    {
+      "day": 7,
+      "min": 14,
+      "max": 65,
+      "median": 33,
+      "q1": 30,
+      "q3": 50,
+      "number": 28
+    }
+  ]
+
+  const scatterPlot = (data) => {
+    const xScale = d3.scaleLinear().domain([1,8]).range([20,470]);
+    const yScale = d3.scaleLinear().domain([0,100]).range([480,20]);
+
+    const yAxis = d3.axisRight(yScale)
+      .ticks(8)
+      .tickSize(-470);
+
+    d3.select("svg").append("g")
+      .attr("transform", "translate(470, 0)")
+      .attr("id", "yAxisG")
+      .call(yAxis)
+
+    const days = ['월', '화' ,'수', '목', '금', '토', '일'];
+    const xAxis = d3.axisBottom(xScale)
+      .tickSize(-470)
+      .tickValues([1,2,3,4,5,6,7])
+      .tickFormat((d,i) => { return days[i]; })
+
+    d3.select("svg").append("g")
+      .attr("transform", "translate(0,480)")
+      .attr("id", "xAxisG")
+      .call(xAxis)
+
+    // 박스플롯의 범위를 지정 => 조건을 더 추가
+    d3.select("svg").selectAll("g.box")
+      .data(data)
+      .enter()
+      .append("g")
+      .attr("class", "box")
+      .attr("transform", (d) => `translate(${xScale(d.day)}, ${yScale(d.median)})`)
+      .each(function(d,i) {
+        // range를 나타내는 수직선, this는 여기서 g 태그가 된다
+        d3.select(this)
+          .append("line")
+          .attr("class", "range")
+          .attr("x1", 0)
+          .attr("x2", 0)
+          .attr("y1", yScale(d.max) - yScale(d.median))
+          .attr("y2", yScale(d.min) - yScale(d.median))
+          .style("stroke", "black")
+          .style("stroke-width", "4px");
+        
+        d3.select(this)
+          .append("line")
+          .attr("class", "max")
+          .attr("x1", -10)
+          .attr("x2", 10)
+          .attr("y1", yScale(d.max) - yScale(d.median))
+          .attr("y2", yScale(d.max) - yScale(d.median))
+          .style("stroke", "black")
+          .style("stroke-width", "4px");
+
+        d3.select(this)
+          .append("line")
+          .attr("class", "min")
+          .attr("x1", -10)
+          .attr("x2", 10)
+          .attr("y1", yScale(d.min) - yScale(d.median))
+          .attr("y2", yScale(d.min) - yScale(d.median))
+          .style("stroke", "black")
+          .style("stroke-width", "4px");
+        
+        // 사각형의 중심이 중앙값에 놓이도록 위치를 조절
+        d3.select(this) // selection을 가리킨다
+          .append("rect")
+          .attr("width", 20)
+          .attr("x", -10)
+          .attr("y", yScale(d.q3) - yScale(d.median)) // 최대 - 최소
+          .attr("height", yScale(d.q1) - yScale(d.q3))
+          .style("fill", "white")
+          .style("stroke", "black")
+          .style("stroke-width", "2px");
+
+        // 중앙값 = g요소의 중심이라서 그냥 바로 그려주면 된다
+        d3.select(this)
+          .append('line')
+          .attr("x1", -10)
+          .attr("x2", 10)
+          .attr("y1", 0)
+          .attr("y2", 0)
+          .style("stroke", "darkgray")
+          .style("stroke-width", "4px");
+
+        // 가장자리 눈금 감추기
+      })
+      d3.select("#xAxisG > path.domain").style("display", "none");
+      d3.select("#yAxisG > path.domain").style("display", "none");
+  }
+
+  scatterPlot(boxPlotData)
+  </script>
+</body>
+</html>
