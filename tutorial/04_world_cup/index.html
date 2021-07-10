@@ -169,6 +169,17 @@
         const buttonClick = (e, name) => {
           const maxValue = d3.max(incomingData, (d) => parseFloat(d[name]));
 
+          const ybLamp = d3.scaleLinear()
+            .interpolate(d3.interpolateLab) // LAB 보간자
+            .domain([0, maxValue]) // 숫자를 그대로 색상에 맵핑하면 보간된 색상이 나오는데
+            // 보간자를 사용하지 않으면 구분하기 어려운 색깔이 나올 가능성이 있다
+            .range(["yellow", "blue"]);
+          
+          // 데이터셋을 지역으로 나눠 표현하고 각기 다른 색깔을 맵핑한다
+          const tenColorScale = d3
+            .scaleOrdinal(d3.schemeCategory10) // 범주값을 특정 색상에 맵핑하는 스케일(색깔은 정해져 있음)
+            .domain(["UEFA", "CONMEBOL", "CAF", "AFC"]);
+
           const radiusScale = d3
             .scaleLinear()
             .domain([0, maxValue])
@@ -178,6 +189,7 @@
             .select("circle")
             .transition()
             .duration(1000) // 트랜지션 추가
+            .style("fill", (p) => tenColorScale(p.region))
             .attr("r", (d) => radiusScale(d[name]));
         };
 
@@ -204,23 +216,32 @@
 
         // 화살표 함수로 하면 lexical this 때문에 this가 전역 객체를 가르켜버린다
         // 이벤트 핸들러의 this
-        function highlightRegion2(d, i) {
-          d3.select(this).select("text").classed("active", true).attr("y", 10);
+        function highlightRegion2(e, data) {
+          const teamColor = d3.rgb('pink');
+
+          d3.select(this)
+            .select("text")
+            .classed("highlight", true)
+            .attr("y", 10)
+            .style('font-size', '30px');
+
           d3.selectAll("g.overallG")
             .select("circle")
-            .each((p, i) => {
-              p.region == d.region
-                ? d3.select(this).classed("active", true)
-                : d3.select(this).classed("inactive", true);
-            });
+            .style("fill", 
+              (p) => p.region === data.region 
+                ? teamColor.brighter(.5)
+                : teamColor.darker(.75)
+            );
+            
           this.parentElement.appendChild(this);
         }
 
         const unhighlight = () => {
-          d3.selectAll("g.overallG").select("circle").attr("class", "");
+          d3.selectAll("g.overallG").select("circle").style("fill", d3.rgb('pink'));
           d3.selectAll("g.overallG")
             .select("text")
             .classed("active", false)
+            .style('font-size', '10px')
             .attr("y", 30);
         };
 

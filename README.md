@@ -203,3 +203,23 @@ d3.select("circle").node();
 
 - svg를 사용할때 노드에 내장된 기능을 이용하면 요소를 자식 요소에 다시 추가하거나 할 수 있음
 - svg는 z레벨이 없어서 요소를 그리는 순서가 DOM 순서에 의해 결정됨
+
+
+## 색상
+
+```js
+teamColor = d3.rgb("red");
+teamColor = d3.rgb("#ff0000");
+teamColor = d3.rgb("rgb(255, 0, 0)");
+teamColor = d3.rgb(255, 0, 0);
+
+const ybLamp = d3.scaleLinear()
+  .interpolate(d3.interpolateLab) // LAB 보간자
+  .domain([0, maxValue]) // 숫자를 그대로 색상에 맵핑하면 보간된 색상이 나오는데
+  // 보간자를 사용하지 않으면 구분하기 어려운 색깔이 나올 가능성이 있다
+  .range(["yellow", "blue"]);
+```
+
+- d3.rgb : 키워드에 맞는 색상을 반환
+- darker,  brighter : 현재 색상보다 명도가 진한 색, 연한 색 반환(ㄷㄷ)
+- 색상 보간자 : HCL, LAB 보간자
