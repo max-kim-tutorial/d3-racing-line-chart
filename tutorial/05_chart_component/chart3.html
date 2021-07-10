@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <title>선 그래프, 보간</title>
+</head>
+<body>
+  <div>선 그래프는 점과 점을 연결해 그려서 만든다</div>
+  <svg style="width:520px;height:520px"></svg>
+  <script>
+    const tweetData = [
+      {
+        "day": 1,
+        "tweets": 1,
+        "retweets": 2,
+        "favorites": 5
+      },
+      {
+        "day": 2,
+        "tweets": 6,
+        "retweets": 11,
+        "favorites": 3
+      },
+      {
+        "day": 3,
+        "tweets": 3,
+        "retweets": 8,
+        "favorites": 1
+      },
+      {
+        "day": 4,
+        "tweets": 5,
+        "retweets": 14,
+        "favorites": 6
+      },
+      {
+        "day": 5,
+        "tweets": 10,
+        "retweets": 29,
+        "favorites": 16
+      },
+      {
+        "day": 6,
+        "tweets": 4,
+        "retweets": 22,
+        "favorites": 10
+      },
+      {
+        "day": 7,
+        "tweets": 3,
+        "retweets": 14,
+        "favorites": 1
+      },
+      {
+        "day": 8,
+        "tweets": 5,
+        "retweets": 18,
+        "favorites": 7
+      },
+      {
+        "day": 9,
+        "tweets": 1,
+        "retweets": 30,
+        "favorites": 22
+      },
+      {
+        "day": 10,
+        "tweets": 4,
+        "retweets": 16,
+        "favorites": 15
+      }
+    ]
+
+    // 일단 점부터 -> 그리고 사이를 잇자
+
+    const drawLineChart = (incoming) => {
+      // 여백을 넣어 스케일을 만들어야 안짤린다
+      const xScale = d3.scaleLinear().domain([1, 10.5]).range([20,480]);
+      const yScale = d3.scaleLinear().domain([0, 35]).range([480,20]);
+
+      const xAxis = d3.axisBottom(xScale)
+        .tickSize(480)
+        .tickValues([1,2,3,4,5,6,7,8,9,10]);
+
+      d3.select("svg").append("g").attr("id", "xAxisG").call(xAxis);
+
+      const yAxis = d3.axisRight(yScale)
+        .ticks(10)
+        .tickSize(480);
+
+      d3.select("svg").append("g").attr("id", "yAxisG").call(yAxis);
+
+
+      // 선 생성기는 점 배열을 입력받으므로 각 점의 좌표로 구성된 값을 전달한다
+      // 함수로 데이터의 프로퍼티를 직접 지정해도 된다
+      const tweetLine = d3.line().x(d => xScale(d.day)).y(d => yScale(d.tweets)).curve(d3.curveBasis);
+      const retweetLine = d3.line().x(d => xScale(d.day)).y(d => yScale(d.retweets)).curve(d3.curveLinear);
+      const favLine = d3.line().x(d => xScale(d.day)).y(d => yScale(d.favorites)).curve(d3.curveStep);
+
+      const tweetCategory = [
+        {
+          name: 'tweets',
+          color: 'black',
+          lineDrawer: tweetLine
+        },
+        {
+          name: 'retweets',
+          color: 'lightgray',
+          lineDrawer: retweetLine
+        },
+        {
+          name: 'favorites',
+          color: 'gray',
+          lineDrawer: favLine
+        },
+      ]
+
+      tweetCategory.forEach((item) => {
+        d3.select("svg").selectAll(`circle.${item.name}`)
+          .data(incoming)
+          .enter()
+          .append("circle")
+          .attr("class", item.name)
+          .attr("r", 5)
+          .attr("cx", (d) => xScale(d.day))
+          .attr("cy", (d) => yScale(d[item.name]))
+          .style("fill", item.color );
+
+        d3.select("svg")
+          .append("path")
+          .attr("d", item.lineDrawer(incoming))
+          .attr("fill", "none")
+          .attr("stroke", item.color)
+          .attr("stroke-width", 3);
+      })
+    }
+
+    drawLineChart(tweetData);
+  </script>
+</body>
+</html>
