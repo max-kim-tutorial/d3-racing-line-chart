@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <title>복잡한 스트림 그래프</title>
+</head>
+<body>
+  <div>9일 동안 영화 6편이 벌어들인 총매출액 (누적)데이터</div>
+  <svg style="width:520px;height:1520px"></svg>
+  <script>
+    const movieData = [
+      {
+        "day": 1,
+        "movie1": 20,
+        "movie2": 8,
+        "movie3": 3,
+        "movie4": 0,
+        "movie5": 0,
+        "movie6": 0
+      },
+      {
+        "day": 2,
+        "movie1": 18,
+        "movie2": 5,
+        "movie3": 1,
+        "movie4": 13,
+        "movie5": 0,
+        "movie6": 0
+      },
+      {
+        "day": 3,
+        "movie1": 14,
+        "movie2": 3,
+        "movie3": 1,
+        "movie4": 10,
+        "movie5": 0,
+        "movie6": 0
+      },
+      {
+        "day": 4,
+        "movie1": 7,
+        "movie2": 3,
+        "movie3": 0,
+        "movie4": 5,
+        "movie5": 27,
+        "movie6": 15
+      },
+      {
+        "day": 5,
+        "movie1": 4,
+        "movie2": 3,
+        "movie3": 0,
+        "movie4": 2,
+        "movie5": 20,
+        "movie6": 14
+      },
+      {
+        "day": 6,
+        "movie1": 3,
+        "movie2": 1,
+        "movie3": 0,
+        "movie4": 0,
+        "movie5": 10,
+        "movie6": 13
+      },
+      {
+        "day": 7,
+        "movie1": 2,
+        "movie2": 0,
+        "movie3": 0,
+        "movie4": 0,
+        "movie5": 8,
+        "movie6": 12
+      },
+      {
+        "day": 8,
+        "movie1": 0,
+        "movie2": 0,
+        "movie3": 0,
+        "movie4": 0,
+        "movie5": 6,
+        "movie6": 11
+      },
+      {
+        "day": 9,
+        "movie1": 0,
+        "movie2": 0,
+        "movie3": 0,
+        "movie4": 0,
+        "movie5": 3,
+        "movie6": 9
+      },
+      {
+        "day": 10,
+        "movie1": 0,
+        "movie2": 0,
+        "movie3": 0,
+        "movie4": 0,
+        "movie5": 1,
+        "movie6": 8
+      }
+    ]
+
+    // 그래디언트
+    const fillScale = d3.scaleLinear().domain([0,5]).range(['lightgray', 'black']);
+
+    // 축
+    const xScale = d3.scaleLinear().domain([1,10]).range([20, 470]);
+    const yScale = d3.scaleLinear().domain([0,60]).range([480, 20]);
+
+    const xAxis = d3.axisBottom(xScale)
+        .tickSize(480)
+        .ticks(10)
+
+    d3.select("svg").append("g").attr("id", "xAxisG").call(xAxis);
+    
+    const yAxis = d3.axisRight(yScale)
+        .tickSize(480)
+
+    d3.select("svg").append("g").attr("id", "yAxisG").call(yAxis);
+
+    // 누적 차트(바인딩된 데이터와 속성명을 인자로 받아 데이터에 루프를 반복해 현재 속성까지의 합계 구함)
+    const simpleStacking = (incomingData, incomingAttribute) => {
+      let stackedHeight = 0;
+      for (x in incomingData) {
+        if (x != 'day') {
+          stackedHeight += parseInt(incomingData[x]); // 속성 순회하며 계속 더함, 누적치를 리턴
+          if (x == incomingData) {
+            break;
+          }
+        }
+      }
+      return stackedHeight;
+    }
+
+    let n = 0;
+    for (key in movieData[0]) {
+      // 속성들을 순회하면서 선을 하나씩 그린다
+      if (key != 'day') {
+        // 선 생성기
+        // 이어지는 메서드로 정의된 점 '들'을 잇게 됨
+        // const movieLine = d3.line()
+        //   .x((d) => xScale(d.day))
+        //   .y((d) => yScale(d[key]))
+        //   .curve(d3.curveCardinal)
+
+        // 영역 생성기
+        const movieArea = d3.area()
+          .x((d) => xScale(d.day))
+          .y0((d) => yScale(0)) // 영역의 아래쪽 모습을 결정함
+          .y1((d) => yScale(simpleStacking(d, key) - d[key])) // 그냥 보통의 y좌표 결정(높이)
+          .curve(d3.curveCardinal);
+
+        d3.select("svg")
+          .append("path")
+          .attr("d", movieArea(movieData)) // 이렇게 수치를 넣어주는 함수가 있으면 enter같은거 대체
+          .attr("fill", fillScale(n))
+          .attr("stroke", "lightgray")
+          .attr("stroke-width", 2)
+          .style("opacity", .3);
+
+        n++;
+      }
+    }
+
+  </script>
+</body>
+</html>
